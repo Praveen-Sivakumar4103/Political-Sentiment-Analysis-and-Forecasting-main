@@ -19,6 +19,7 @@ from functools import lru_cache
 import os
 import langid
 from googletrans import Translator
+
 # Initialize NLTK with comprehensive error handling
 def initialize_nltk():
     try:
@@ -383,7 +384,27 @@ def create_comparison_chart(results):
 @st.cache_data
 def analyze_party_sentiment(uploaded_file, party_name, analysis_method='hybrid', max_tweets=2000):
     try:
-        stringio = StringIO(uploaded_file.getvalue().decode("utf-8"))
+        # Check if file is still available
+        if uploaded_file is None:
+            st.error(f"No file uploaded for {party_name}")
+            return None
+            
+        # Try to get file content from session state first
+        file_content = None
+        if f"file_content_{party_name}" in st.session_state:
+            file_content = st.session_state[f"file_content_{party_name}"]
+        
+        # If not in session state, try to read from uploaded file
+        if file_content is None:
+            if not hasattr(uploaded_file, 'getvalue'):
+                st.error(f"File for {party_name} is no longer available. Please re-upload.")
+                return None
+            file_content = uploaded_file.getvalue()
+            # Store in session state for future use
+            st.session_state[f"file_content_{party_name}"] = file_content
+        
+        # Process the file content
+        stringio = StringIO(file_content.decode("utf-8"))
         df = pd.read_csv(stringio)
         
         # Sample data if too large
@@ -515,6 +536,8 @@ def main():
                     )
                     
                     if uploaded_file:
+                        # Store file content in session state immediately
+                        st.session_state[f"file_content_{party_name}"] = uploaded_file.getvalue()
                         party_files[party_name] = uploaded_file
     
     # Add party and analyze buttons
