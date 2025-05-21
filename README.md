@@ -91,4 +91,5 @@ streamlit run election_sentiment_app.py
 
 - Iniya Vasanthan V M 
 - Praveen S
+- Kishore S
  
